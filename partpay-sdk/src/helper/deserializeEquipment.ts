@@ -1,5 +1,5 @@
 import { option, string, u16, array, u8, i64, u64, publicKey, Serializer } from "@metaplex-foundation/umi/serializers";
-import { EquipmentMetadata, FinancingOption } from "../types/Equipment";
+import { EquipmentMetadata } from "../types/Equipment";
 
 function createStructSerializer<T extends Record<string, Serializer<any, any>>>(fields: T): Serializer<{ [K in keyof T]: T[K] extends Serializer<infer U, any> ? U : never }, { [K in keyof T]: T[K] extends Serializer<any, infer V> ? V : never }> {
     return {
@@ -103,11 +103,12 @@ export function deserializeEquipment(data: Uint8Array): EquipmentMetadata {
             new Date(Number(equipment.createdAt.value) * 1000) : undefined,
         updatedAt: equipment.updatedAt.__option === 'Some' ? 
             new Date(Number(equipment.updatedAt.value) * 1000) : undefined,
-        financingOptions: equipment.financingOptions.map((option: FinancingOption) => ({
-            termMonths: option.termMonths,
-            interestRate: option.interestRate,
-            minimumDownPayment: BigInt(option.minimumDownPayment),
-        })),
+            financingOptions: equipment.financingOptions.map((option: any) => ({
+                term: option.term,
+                termUnit: option.termUnit,
+                interestRate: option.interestRate,
+                minimumDownPayment: BigInt(option.minimumDownPayment),
+            })),
         serialNumber: equipment.serialNumber.__option === 'Some' ? equipment.serialNumber.value : undefined,
     };
 }

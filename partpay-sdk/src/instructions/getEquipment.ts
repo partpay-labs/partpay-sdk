@@ -47,3 +47,4 @@ export const getEquipment = async (
   // Deserialize the fetched data into EquipmentMetadata format using a helper function.
   return deserializeEquipment(accountInfo.data);
 };
+

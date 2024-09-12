@@ -1,31 +1,52 @@
-import { Umi, TransactionBuilder, generateSigner, publicKey } from '@metaplex-foundation/umi';
-import { createCollection } from '@metaplex-foundation/mpl-core';
-import { Vendor } from '../types';
-import { metadataUploader } from '../helper/metadataUploader';
-import { createVendor } from '../instructions';
+// Mock the helper module where metadataUploader is defined.
+jest.mock('../helper/metadataUploader', () => ({
+  ...jest.requireActual('../helper/metadataUploader'),
+  metadataUploader: jest.fn(),
+}));
 
-jest.mock('@metaplex-foundation/mpl-core');
-jest.mock('../src/helper/metadataUploader');
+jest.mock('@metaplex-foundation/mpl-core', () => ({
+  createCollection: jest.fn().mockReturnValue({
+    add: jest.fn().mockReturnValue({
+      // mock the TransactionBuilder methods as needed
+      sendAndConfirm: jest.fn().mockResolvedValue({ signature: 'mocked-signature' }),
+    }),
+  }),
+}));
+
+jest.mock('@metaplex-foundation/umi', () => ({
+  ...jest.requireActual('@metaplex-foundation/umi'),
+  generateSigner: jest.fn(),
+}));
+
+import { Umi, TransactionBuilder, publicKey, generateSigner } from '@metaplex-foundation/umi';
+import { createCollection } from '@metaplex-foundation/mpl-core';
+import { metadataUploader } from '../helper/metadataUploader'; // Import the mocked function
+import { createVendor } from '../instructions';
+import { Vendor } from '../types/Vendor';
 
 describe('createVendor', () => {
   let mockUmi: jest.Mocked<Umi>;
 
   beforeEach(() => {
     mockUmi = {
-      payer: { publicKey: publicKey('11111111111111111111111111111111') },
+      payer: { publicKey: publicKey('4N4XHzQVWZT9J1Wx4PSKk1Ht4fjVh9bKbZs5HoLpG9Pa') }, // Valid base58 encoded mock key
     } as any;
+
     (createCollection as jest.Mock).mockReturnValue({
       add: jest.fn().mockReturnValue(new TransactionBuilder()),
     });
+
+    // Properly mock the metadataUploader function
     (metadataUploader as jest.Mock).mockResolvedValue('https://example.com/metadata.json');
+
     (generateSigner as jest.Mock).mockReturnValue({
-      publicKey: publicKey('22222222222222222222222222222222'),
+      publicKey: publicKey('Fmk1XZ1XGmbpX3j7g7gM6uEQyDbVVebS9TLeZ5uNmtmH'), // Valid base58 encoded mock key
     });
   });
 
   it('should create a vendor successfully', async () => {
     const params = {
-      owner: publicKey('33333333333333333333333333333333'),
+      owner: publicKey('5zzL1gLBZ1d9SLvjbHHk1Pb4NVhnAR2YxgmpJ3LehaxR'), // Valid base58 encoded mock key
       name: 'Test Vendor',
       metadata: {} as Vendor,
     };

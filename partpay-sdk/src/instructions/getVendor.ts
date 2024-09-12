@@ -1,6 +1,7 @@
 import { TransactionBuilder, PublicKey, Umi } from '@metaplex-foundation/umi';
 import { PARTPAY_PROGRAM_ID } from '../constants';
 import { struct, u64, publicKey } from '@metaplex-foundation/umi/serializers';
+import { VendorData } from '../types';
 
 /**
  * Retrieves vendor data from the blockchain.
@@ -9,16 +10,14 @@ import { struct, u64, publicKey } from '@metaplex-foundation/umi/serializers';
  * @param vendorPubkey - Public key of the vendor to retrieve.
  * @returns A VendorData object containing the vendor's details.
  */
-export interface VendorData {
-  owner: PublicKey;           // Public key of the vendor's owner.
-  collectionAddress: PublicKey; // Public key of the vendor's collection.
-  equipmentCount: bigint;     // Number of equipment associated with the vendor.
-}
+
 
 export const getVendor = async (
   umi: Umi,
   vendorPubkey: PublicKey
 ): Promise<VendorData> => {
+
+  
   const instruction = {
     programId: PARTPAY_PROGRAM_ID, // Program ID responsible for managing vendor data.
     keys: [

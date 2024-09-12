@@ -89,3 +89,9 @@ export interface DayHours {
   open: string;  // Opening time in HH:mm format
   close: string; // Closing time in HH:mm format
 }
+
+export interface VendorData {
+  owner: PublicKey;           // Public key of the vendor's owner.
+  collectionAddress: PublicKey; // Public key of the vendor's collection.
+  equipmentCount: bigint;     // Number of equipment associated with the vendor.
+}

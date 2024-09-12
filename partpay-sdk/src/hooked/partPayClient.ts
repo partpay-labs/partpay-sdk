@@ -4,6 +4,7 @@ import {
   TransactionBuilder,
   TransactionSignature,
   Umi,
+  keypairIdentity,
 } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { mplCore } from "@metaplex-foundation/mpl-core";
@@ -12,18 +13,19 @@ import { createVendor } from "../instructions/createVendor";
 import { EquipmentMetadata, EquipmentPublicKey, FinancingOption } from "../types/Equipment";
 import { addEquipment } from "../instructions/addEquipment";
 import { getEquipment } from "../instructions/getEquipment";
-import { getVendor, VendorData } from "../instructions/getVendor";
+import { getVendor } from "../instructions/getVendor";
 import { getAllVendorEquipments } from "../instructions/getAllVendorEquipent";
 import { updateEquipment } from "../instructions/updateEquipment";
 import { deleteEquipment } from "../instructions/deleteEquipment";
 import { setFinancingOptions } from "../instructions/setFinancingOptions";
 import { createInstallmentPlan } from "../instructions/createInstallmentPlan";
-import { Vendor } from "../types/Vendor";
+import { Vendor, VendorData } from "../types/Vendor";
 import { base58 } from "@metaplex-foundation/umi/serializers";
 import { findInstallmentPlanPDA } from "../instructions/getInstalment";
 import { Connection, PublicKey as SolanaPublicKey } from "@solana/web3.js";
 import { ActionGetResponse, ActionPostResponse } from "@solana/actions";
 import axios from "axios";
+import { createSigner } from "../helper/createSigner";
 
 /**
  * PartPayClient is the main SDK class for interacting with the PartPay protocol.
@@ -32,9 +34,9 @@ import axios from "axios";
 export class PartPayClient {
   private umi?: Umi;
   private connection?: Connection;
-  private readonly baseUrl: string = 'https://your-actions-blinks-server.com/api';
+  private readonly baseUrl: string = 'https://api.partpay.xyz';
 
-  constructor(options: { umi?: Umi; connection?: Connection;}) {
+  constructor(options: { umi?: Umi; connection?: Connection; }) {
     this.umi = options.umi;
     this.connection = options.connection;
   }
@@ -44,10 +46,13 @@ export class PartPayClient {
    * @param endpoint - The Solana RPC endpoint to connect to.
    * @returns A new instance of PartPayClient.
    */
-  static createWithUmi(endpoint: string): PartPayClient {
+  static createWithUmi(endpoint: string, secretKey: Uint8Array): PartPayClient {
     const umi = createUmi(endpoint)
       .use(mplCore())
-      .use(partpayPlugin());
+      .use(partpayPlugin())
+
+    const signer = createSigner(umi, secretKey);
+    umi.use(keypairIdentity(signer));
     return new PartPayClient({ umi });
   }
 
@@ -88,7 +93,7 @@ export class PartPayClient {
    * @returns A TransactionBuilder object to build and send the transaction.
    */
   async createVendor(params: { owner: UmiPublicKey; name: string; metadata: Vendor }): Promise<TransactionBuilder> {
-    if(!this.umi) {
+    if (!this.umi) {
       throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
     }
     return createVendor(this.umi, params);
@@ -101,7 +106,7 @@ export class PartPayClient {
    * @returns A TransactionBuilder object to build and send the transaction.
    */
   async addEquipment(params: { owner: UmiPublicKey; vendor: UmiPublicKey; name: string; metadata: EquipmentMetadata }): Promise<TransactionBuilder> {
-    if(!this.umi) {
+    if (!this.umi) {
       throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
     }
     return addEquipment(this.umi, params);
@@ -114,7 +119,7 @@ export class PartPayClient {
    * @returns The metadata associated with the equipment.
    */
   async getEquipment(equipmentPubkey: UmiPublicKey): Promise<EquipmentMetadata> {
-    if(!this.umi) {
+    if (!this.umi) {
       throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
     }
     return getEquipment(this.umi, equipmentPubkey);
@@ -127,7 +132,7 @@ export class PartPayClient {
    * @returns An object containing the vendor's data.
    */
   async getVendor(vendorPubkey: UmiPublicKey): Promise<VendorData> {
-    if(!this.umi) {
+    if (!this.umi) {
       throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
     }
     return getVendor(this.umi, vendorPubkey);
@@ -140,7 +145,7 @@ export class PartPayClient {
    * @returns An array of public keys for each piece of equipment.
    */
   async getAllVendorEquipments(vendorPubkey: UmiPublicKey): Promise<EquipmentPublicKey[]> {
-    if(!this.umi) {
+    if (!this.umi) {
       throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
     }
     return getAllVendorEquipments(this.umi, vendorPubkey);
@@ -153,7 +158,7 @@ export class PartPayClient {
    * @returns A TransactionBuilder object to build and send the transaction.
    */
   async updateEquipment(params: { equipment: UmiPublicKey; newUri: string }): Promise<TransactionBuilder> {
-    if(!this.umi) {
+    if (!this.umi) {
       throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
     }
     return updateEquipment(this.umi, params);
@@ -166,7 +171,7 @@ export class PartPayClient {
    * @returns A TransactionBuilder object to build and send the transaction.
    */
   async deleteEquipment(params: { owner: UmiPublicKey; vendor: UmiPublicKey; equipment: UmiPublicKey }): Promise<TransactionBuilder> {
-    if(!this.umi) {
+    if (!this.umi) {
       throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
     }
     return deleteEquipment(this.umi, params);
@@ -179,7 +184,7 @@ export class PartPayClient {
    * @returns A TransactionBuilder object to build and send the transaction.
    */
   async setFinancingOptions(params: { equipment: UmiPublicKey; options: FinancingOption[] }): Promise<TransactionBuilder> {
-    if(!this.umi) {
+    if (!this.umi) {
       throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
     }
     return setFinancingOptions(this.umi, params);
@@ -192,86 +197,86 @@ export class PartPayClient {
  * total amount, installment count, interest rate, and the first payment date.
  * @returns A TransactionBuilder object to build and send the transaction.
  */
-async createInstallmentPlan(
-  params: {
-    equipment: UmiPublicKey;
-    borrower: UmiPublicKey;
-    totalAmount: number;
-    installmentCount: number;
-    interestRate: number;
-    firstPaymentDate: Date;
-    termUnit: 'days' | 'weeks' | 'months';
-  }
-): Promise<TransactionBuilder> {
-  if (!this.umi) {
-    throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
-  }
+  async createInstallmentPlan(
+    params: {
+      equipment: UmiPublicKey;
+      borrower: UmiPublicKey;
+      totalAmount: number;
+      installmentCount: number;
+      interestRate: number;
+      firstPaymentDate: Date;
+      termUnit: 'days' | 'weeks' | 'months';
+    }
+  ): Promise<TransactionBuilder> {
+    if (!this.umi) {
+      throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
+    }
 
-  // Assuming you have a `createInstallmentPlan` function that uses `umi` to build the transaction
-  return createInstallmentPlan(this.umi, params);
-}
-
-async getPaymentAction(pubkey: string): Promise<ActionGetResponse> {
-  const response = await axios.get(`${this.baseUrl}/pay/action/${pubkey}`);
-  return response.data;
-}
-
-async createFullPaymentTransaction(pubkey: string, account: string): Promise<ActionPostResponse> {
-  const response = await axios.post(`${this.baseUrl}/pay/action/${pubkey}/full`, { account });
-  return response.data;
-}
-
-async createTransactionInstallment(pubkey: string, account: string, installmentPlan: number): Promise<ActionPostResponse> {
-  const response = await axios.post(`${this.baseUrl}/pay/action/${pubkey}/installments`, { 
-    account, 
-    installmentPlan 
-  });
-  return response.data;
-}
-
-/**
- * Creates and serializes an installment plan transaction.
- *
- * @param equipmentPubkey - The public key of the equipment.
- * @param accountPubkey - The public key of the account (borrower).
- * @param financingOption - The financing option details.
- * @returns A Buffer containing the serialized transaction.
- */
-async createInstallmentPlanTransaction(
-  equipmentPubkey: UmiPublicKey,
-  accountPubkey: UmiPublicKey,
-  financingOption: FinancingOption
-): Promise<Buffer> {
-  if (!this.umi) {
-    throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
+    // Assuming you have a `createInstallmentPlan` function that uses `umi` to build the transaction
+    return createInstallmentPlan(this.umi, params);
   }
 
-  const equipment = await this.getEquipment(equipmentPubkey);
-  const firstPaymentDate = this.calculateFirstPaymentDate(financingOption);
-
-  const transactionBuilder = await this.createInstallmentPlan({
-    equipment: equipmentPubkey,
-    borrower: accountPubkey,
-    totalAmount: equipment.price,
-    installmentCount: financingOption.term,
-    interestRate: financingOption.interestRate,
-    firstPaymentDate,
-    termUnit: financingOption.termUnit,
-  });
-
-  try {
-    // Build and sign the transaction
-    const transaction = await transactionBuilder.build(this.umi);
-
-    // Serialize the transaction signature
-    const serializedTransaction = this.convertSignatureToString(transaction.signatures[0]);
-
-    return Buffer.from(serializedTransaction);
-  } catch (error) {
-    console.error("An error occurred while creating or serializing the transaction:", error);
-    throw error;
+  async getPaymentAction(pubkey: string): Promise<ActionGetResponse> {
+    const response = await axios.get(`${this.baseUrl}/pay/action/${pubkey}`);
+    return response.data;
   }
-}
+
+  async createFullPaymentTransaction(pubkey: string, account: string): Promise<ActionPostResponse> {
+    const response = await axios.post(`${this.baseUrl}/pay/action/${pubkey}/full`, { account });
+    return response.data;
+  }
+
+  async createTransactionInstallment(pubkey: string, account: string, installmentPlan: number): Promise<ActionPostResponse> {
+    const response = await axios.post(`${this.baseUrl}/pay/action/${pubkey}/installments`, {
+      account,
+      installmentPlan
+    });
+    return response.data;
+  }
+
+  /**
+   * Creates and serializes an installment plan transaction.
+   *
+   * @param equipmentPubkey - The public key of the equipment.
+   * @param accountPubkey - The public key of the account (borrower).
+   * @param financingOption - The financing option details.
+   * @returns A Buffer containing the serialized transaction.
+   */
+  async createInstallmentPlanTransaction(
+    equipmentPubkey: UmiPublicKey,
+    accountPubkey: UmiPublicKey,
+    financingOption: FinancingOption
+  ): Promise<Buffer> {
+    if (!this.umi) {
+      throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
+    }
+
+    const equipment = await this.getEquipment(equipmentPubkey);
+    const firstPaymentDate = this.calculateFirstPaymentDate(financingOption);
+
+    const transactionBuilder = await this.createInstallmentPlan({
+      equipment: equipmentPubkey,
+      borrower: accountPubkey,
+      totalAmount: equipment.price,
+      installmentCount: financingOption.term,
+      interestRate: financingOption.interestRate,
+      firstPaymentDate,
+      termUnit: financingOption.termUnit,
+    });
+
+    try {
+      // Build and sign the transaction
+      const transaction = await transactionBuilder.build(this.umi);
+
+      // Serialize the transaction signature
+      const serializedTransaction = this.convertSignatureToString(transaction.signatures[0]);
+
+      return Buffer.from(serializedTransaction);
+    } catch (error) {
+      console.error("An error occurred while creating or serializing the transaction:", error);
+      throw error;
+    }
+  }
 
   /**
  * Checks if an existing installment plan exists on the blockchain.
@@ -280,28 +285,28 @@ async createInstallmentPlanTransaction(
  * @param borrowerPubkey - The public key of the borrower.
  * @returns A boolean indicating whether the installment plan exists.
  */
-async checkExistingInstallmentPlan(
-  equipmentPubkey: SolanaPublicKey,
-  borrowerPubkey: SolanaPublicKey
-): Promise<boolean> {
-  if (!this.umi) {
-    throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
-  }
-
-  const [installmentPlanPDA] = await findInstallmentPlanPDA(equipmentPubkey, borrowerPubkey);
-
-  try {
-    // Attempt to get the account information using the Umi instance
-    await this.umi.rpc.getAccount(publicKey(installmentPlanPDA));
-    return true;
-  } catch (error) {
-    // Check if the error indicates the account was not found
-    if (error instanceof Error && error.message.includes("Account not found")) {
-      return false;
+  async checkExistingInstallmentPlan(
+    equipmentPubkey: SolanaPublicKey,
+    borrowerPubkey: SolanaPublicKey
+  ): Promise<boolean> {
+    if (!this.umi) {
+      throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
     }
-    throw error;
+
+    const [installmentPlanPDA] = await findInstallmentPlanPDA(equipmentPubkey, borrowerPubkey);
+
+    try {
+      // Attempt to get the account information using the Umi instance
+      await this.umi.rpc.getAccount(publicKey(installmentPlanPDA));
+      return true;
+    } catch (error) {
+      // Check if the error indicates the account was not found
+      if (error instanceof Error && error.message.includes("Account not found")) {
+        return false;
+      }
+      throw error;
+    }
   }
-}
 
   private calculateFirstPaymentDate(financingOption: FinancingOption): Date {
     const now = new Date();
