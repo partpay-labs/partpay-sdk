@@ -92,11 +92,11 @@ export class PartPayClient {
    * @param params - An object containing the vendor owner's public key, vendor name, and metadata.
    * @returns A TransactionBuilder object to build and send the transaction.
    */
-  async createVendor(params: { owner: UmiPublicKey; name: string; metadata: Vendor }): Promise<TransactionBuilder> {
+  async createVendor( metadata: Vendor ): Promise<TransactionBuilder> {
     if (!this.umi) {
       throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
     }
-    return createVendor(this.umi, params);
+    return createVendor(this.umi, metadata);
   }
 
   /**
@@ -157,7 +157,7 @@ export class PartPayClient {
    * @param params - An object containing the equipment's public key and the new URI.
    * @returns A TransactionBuilder object to build and send the transaction.
    */
-  async updateEquipment(params: { equipment: UmiPublicKey; newUri: string }): Promise<TransactionBuilder> {
+  async updateEquipment(params: { equipmentPubKey: UmiPublicKey; metadata: EquipmentMetadata; }): Promise<TransactionBuilder> {
     if (!this.umi) {
       throw new Error("Umi instance is not initialized. Please initialize with Umi to use this method.");
     }

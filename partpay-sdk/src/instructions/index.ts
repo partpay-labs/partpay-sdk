@@ -7,3 +7,4 @@ export * from './updateEquipment';
 export * from './deleteEquipment';
 export * from './setFinancingOptions';
 export * from './createInstallmentPlan';
+export * from './getInstalment'

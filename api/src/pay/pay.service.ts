@@ -2,15 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { ComputeBudgetProgram, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { ActionGetResponse, ActionPostRequest, ActionPostResponse, createPostResponse } from '@solana/actions';
 import { ActionMetadata, FinancingOption } from '../type/actionMetadata';
-// import { PartPayClient } from '../../../partpay-sdk/src/hooked';
 import { ConfigService } from '@nestjs/config';
 import { publicKey } from '@metaplex-foundation/umi';
+import { EquipmentMetadata, PartPayClient } from '@partpay-libs/sdk';
 
 @Injectable()
 export class PayService {
     constructor(
-        // private readonly partPayClient: PartPayClient,
-        private readonly configService: ConfigService,
+        private readonly partPayClient: PartPayClient,
     ) {}
 
     async getPaymentAction(pubkey: string): Promise<ActionGetResponse> {

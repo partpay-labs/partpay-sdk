@@ -19,6 +19,7 @@ export interface EquipmentMetadata {
   currency: string; // Currency used for pricing (e.g., USD, SOL).
   installmentPrice?: number; // Optional price for installment payments.
   maxNumberOfInstallments?: number; // Maximum allowed installment payments.
+  minimumInstallmentPrice?: number; // Minimum price allowed installment payments.
   maxPaymentDuration?: number; // Maximum payment duration in days or months.
 
   stockQuantity: number; // Number of items available in stock.
