@@ -45,17 +45,13 @@ describe('createVendor', () => {
   });
 
   it('should create a vendor successfully', async () => {
-    const params = {
-      owner: publicKey('5zzL1gLBZ1d9SLvjbHHk1Pb4NVhnAR2YxgmpJ3LehaxR'), // Valid base58 encoded mock key
-      name: 'Test Vendor',
-      metadata: {} as Vendor,
-    };
+    const metadata = {} as Vendor
 
-    const result = await createVendor(mockUmi, params);
+    const result = await createVendor(mockUmi, metadata);
 
-    expect(metadataUploader).toHaveBeenCalledWith(mockUmi, params.metadata);
+    expect(metadataUploader).toHaveBeenCalledWith(mockUmi, metadata);
     expect(createCollection).toHaveBeenCalledWith(mockUmi, expect.objectContaining({
-      name: params.name,
+      name: metadata.name,
       uri: 'https://example.com/metadata.json',
     }));
     expect(result).toBeInstanceOf(TransactionBuilder);

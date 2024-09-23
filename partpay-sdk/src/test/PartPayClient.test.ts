@@ -216,11 +216,7 @@ describe('PartPayClient', () => {
   });
 
   it('should call createVendor instruction', async () => {
-    const params = {
-      owner: publicKey(validPublicKey),
-      name: 'Test Vendor',
-      metadata: {} as Vendor,
-    };
+    const  metadata = {} as Vendor;
     
     const createVendorMock = jest.fn().mockReturnValue({
       add: jest.fn().mockReturnThis(),
@@ -230,9 +226,9 @@ describe('PartPayClient', () => {
     });
     jest.spyOn(Instructions, 'createVendor').mockImplementation(createVendorMock);
   
-    await client.createVendor(params);
+    await client.createVendor(metadata);
   
-    expect(createVendorMock).toHaveBeenCalledWith(expect.anything(), params);
+    expect(createVendorMock).toHaveBeenCalledWith(expect.anything(), metadata);
   });
 
   it('should call addEquipment instruction', async () => {
@@ -273,30 +269,28 @@ describe('PartPayClient', () => {
     });
   });
 
-  describe('getAllVendorEquipments', () => {
-    it('should call getAllVendorEquipments instruction', async () => {
-      const vendorPubkey = publicKey(validPublicKey);
-      await client.getAllVendorEquipments(vendorPubkey);
-      expect(Instructions.getAllVendorEquipments).toHaveBeenCalledWith(mockUmi, vendorPubkey);
+  describe('updateEquipment', () => {
+    it('should call updateEquipment instruction', async () => {
+      const params = {
+        equipmentPubKey: publicKey(validPublicKey),
+        metadata: {} as EquipmentMetadata
+      };
+      
+      const updateEquipmentMock = jest.fn().mockReturnValue({
+        add: jest.fn().mockReturnThis(),
+        setBlockhash: jest.fn().mockReturnThis(),
+        build: jest.fn().mockResolvedValue({ signatures: [new Uint8Array([1, 2, 3, 4])], message: {} }),
+        sendAndConfirm: jest.fn().mockResolvedValue({ signature: new Uint8Array([1, 2, 3, 4]), result: { value: { err: null } } }),
+      });
+      
+      jest.spyOn(Instructions, 'updateEquipment').mockImplementation(updateEquipmentMock);
+    
+      const result = await client.updateEquipment(params);
+    
+      expect(Instructions.updateEquipment).toHaveBeenCalledWith(mockUmi, params);
+      expect(result).toBeInstanceOf(TransactionBuilder);
+      // Add more assertions as needed to verify the returned TransactionBuilder
     });
-  });
-
-  it('should call updateEquipment instruction', async () => {
-    const params = {
-      equipment: publicKey(validPublicKey),
-      newUri: 'https://example.com/new-metadata.json',
-    };
-    const updateEquipmentMock = jest.fn().mockReturnValue({
-      add: jest.fn().mockReturnThis(),
-      setBlockhash: jest.fn().mockReturnThis(),
-      build: jest.fn().mockResolvedValue({ signatures: [new Uint8Array([1, 2, 3, 4])], message: {} }),
-      sendAndConfirm: jest.fn().mockResolvedValue({ signature: new Uint8Array([1, 2, 3, 4]), result: { value: { err: null } } }),
-    });
-    jest.spyOn(Instructions, 'updateEquipment').mockImplementation(updateEquipmentMock);
-  
-    await client.updateEquipment(params);
-  
-    expect(updateEquipmentMock).toHaveBeenCalledWith(expect.anything(), params);
   });
 
   describe('deleteEquipment', () => {

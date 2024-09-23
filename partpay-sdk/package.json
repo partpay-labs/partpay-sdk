@@ -6,7 +6,7 @@
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "start": "ts-node src/main.ts",
+    "start": "tsx src/main.ts",
     "test": "jest",
     "build": "rollup -c",
     "publish": "npm publish --access public",
@@ -52,6 +52,7 @@
     "rollup": "^4.21.3",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
+    "tsx": "^4.19.1",
     "typescript": "^5.6.2"
   },
   "repository": {
