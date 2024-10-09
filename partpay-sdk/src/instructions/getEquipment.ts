@@ -1,50 +1,58 @@
-import { TransactionBuilder, PublicKey, Umi } from '@metaplex-foundation/umi';
-import { PARTPAY_PROGRAM_ID } from '../constants';
-import { struct } from '@metaplex-foundation/umi/serializers';
-import { EquipmentMetadata } from '../types/Equipment';
-import { deserializeEquipment } from '../helper/deserializeEquipment';
+import { Umi, PublicKey, publicKey } from "@metaplex-foundation/umi";
+import { Equipment } from "../types";
 
-/**
- * Retrieves equipment metadata from the blockchain.
- * 
- * @param umi - Umi client instance for interacting with the blockchain.
- * @param equipmentPubkey - Public key of the equipment to retrieve.
- * @returns An EquipmentMetadata object containing detailed metadata of the equipment.
- */
-export const getEquipment = async (
-  umi: Umi,
-  equipmentPubkey: PublicKey
-): Promise<EquipmentMetadata> => {
-  const instruction = {
-    programId: PARTPAY_PROGRAM_ID, // Program ID responsible for managing equipment data.
-    keys: [
-      { pubkey: equipmentPubkey, isSigner: false, isWritable: false }, // Public key of the equipment.
-    ],
-    data: struct([]).serialize({}), // Serialize an empty data structure as no input is required.
-  };
+function readUInt32LE(data: Uint8Array, offset: number): number {
+  return (data[offset] |
+    (data[offset + 1] << 8) |
+    (data[offset + 2] << 16) |
+    (data[offset + 3] << 24)) >>> 0;
+}
 
-  // Build and send the transaction to fetch equipment data.
-  const builder = (new TransactionBuilder())
-    .add({
-      instruction,
-      signers: [], // No additional signers needed for fetching data.
-      bytesCreatedOnChain: 0, // No extra data written to the chain.
-    });
+function readBigUInt64LE(data: Uint8Array, offset: number): bigint {
+  const lo = readUInt32LE(data, offset);
+  const hi = readUInt32LE(data, offset + 4);
+  return BigInt(lo) + (BigInt(hi) << 32n);
+}
 
-  const result = await builder.sendAndConfirm(umi);
+export async function getEquipment(umi: Umi, equipmentPubkey: PublicKey): Promise<Equipment> {
+  try {
+    const accountInfo = await umi.rpc.getAccount(equipmentPubkey);
 
-  // Check for transaction errors and handle them.
-  if (result.result.value.err) {
-    throw new Error(`Transaction failed: ${JSON.stringify(result.result.value.err)}`);
+    if (!accountInfo.exists) {
+      throw new Error(`Equipment account ${equipmentPubkey.toString()} does not exist`);
+    }
+
+    // The first 8 bytes are the account discriminator
+    const data = accountInfo.data.slice(8);
+
+    // Deserialize the account data
+    const vendorPubkey = publicKey(data.slice(0, 32));
+    const assetPubkey = publicKey(data.slice(32, 64));
+
+    let offset = 64;
+    const nameLength = readUInt32LE(data, offset);
+    offset += 4;
+    const name = new TextDecoder().decode(data.slice(offset, offset + nameLength));
+    offset += nameLength;
+
+    const uriLength = readUInt32LE(data, offset);
+    offset += 4;
+    const uri = new TextDecoder().decode(data.slice(offset, offset + uriLength));
+    offset += uriLength;
+
+    const price = readBigUInt64LE(data, offset);
+
+    const equipment: Equipment = {
+      vendor: vendorPubkey,
+      asset: assetPubkey,
+      name,
+      uri,
+      price: price.toString(),
+    };
+
+    return equipment;
+  } catch (error) {
+    console.error("Error fetching equipment:", error);
+    throw error;
   }
-
-  // Fetch the equipment account data separately using the public key.
-  const accountInfo = await umi.rpc.getAccount(equipmentPubkey);
-  if (!accountInfo.exists) {
-    throw new Error('Equipment account does not exist');
-  }
-
-  // Deserialize the fetched data into EquipmentMetadata format using a helper function.
-  return deserializeEquipment(accountInfo.data);
-};
-
+}

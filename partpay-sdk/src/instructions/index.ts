@@ -1,10 +1,8 @@
 export * from './createVendor';
-export * from './addEquipment';
+export * from './createEquipment';
 export * from './getEquipment';
 export * from './getVendor';
 export * from './getAllVendorEquipent';
 export * from './updateEquipment';
 export * from './deleteEquipment';
-export * from './setFinancingOptions';
-export * from './createInstallmentPlan';
-export * from './getInstalment'
+// export * from './getInstalment'

@@ -1,42 +1,45 @@
-import { TransactionBuilder, PublicKey, Umi } from '@metaplex-foundation/umi';
-import { PARTPAY_PROGRAM_ID } from '../constants'; // Constant representing the program ID of the deployed PartPay program
-import { struct } from '@metaplex-foundation/umi/serializers'; // Utility for structuring and serializing data
-import { extractEquipmentPubkeysFromResult } from '../helper/extractEquipmentPubkey'; // Helper function to extract equipment public keys from a transaction result
-import { EquipmentPublicKey } from '../types/Equipment'; // Type definition for equipment public keys
+import { Umi, PublicKey, publicKey } from "@metaplex-foundation/umi";
+import { PARTPAY_PROGRAM_ID } from "../constants";
+import { getVendor } from "./getVendor";
+import { DeserializedEquipment, deserializeEquipment } from "../account/EquipmentAccount";
+import { PublicKey as Pubkey} from "@solana/web3.js"
 
-/**
- * Fetches all equipment public keys associated with a given vendor.
- * 
- * @param umi - An instance of the Umi class, used for interacting with the blockchain
- * @param vendorPubkey - The public key of the vendor whose equipment is to be fetched
- * @returns A promise that resolves to an array of equipment public keys
- */
-export const getAllVendorEquipments = async (
-    umi: Umi,
-    vendorPubkey: PublicKey
-): Promise<EquipmentPublicKey[]> => {
-    // Define the transaction instruction for fetching equipment
-    const instruction = {
-        programId: PARTPAY_PROGRAM_ID, // The ID of the PartPay program deployed on Solana
-        keys: [
-            { pubkey: vendorPubkey, isSigner: false, isWritable: false }, // Key for vendor identification
-        ],
-        data: struct([]).serialize({}), // Serialize the instruction data, empty in this case
-    };
+export async function getAllVendorEquipment(umi: Umi, vendorPubkey: PublicKey): Promise<DeserializedEquipment[]> {
+  try {
+    // First, get the vendor account to know how many equipment items to expect
+    const vendor = await getVendor(umi, vendorPubkey);
+    const equipmentCount = vendor.equipmentCount;
 
-    // Create a transaction to send to the blockchain
-    const builder = (new TransactionBuilder())
-        .add({
-            instruction, // Add the instruction to the transaction
-            signers: [], // No additional signers required
-            bytesCreatedOnChain: 0, // No additional bytes are created on-chain
-        });
+    const equipmentPromises: Promise<DeserializedEquipment | null>[] = [];
 
-    // Send the transaction and wait for confirmation
-    const result = await builder.sendAndConfirm(umi);
-    
-    // Extract the equipment public keys from the transaction result
-    const equipmentPubkeys = extractEquipmentPubkeysFromResult(result);
+    for (let i = 0; i < equipmentCount; i++) {
+      const [equipmentPDA] = umi.eddsa.findPda(PARTPAY_PROGRAM_ID, [
+        Buffer.from("equipment"),
+        new Pubkey(vendorPubkey).toBuffer(),
+        Buffer.from(new Uint32Array([i]).buffer),
+      ]);
 
-    return equipmentPubkeys; // Return the extracted equipment public keys
-};
+      equipmentPromises.push(
+        umi.rpc.getAccount(equipmentPDA)
+          .then(accountInfo => {
+            if (!accountInfo.exists) {
+              console.warn(`Equipment account ${equipmentPDA.toString()} does not exist`);
+              return null;
+            }
+            return deserializeEquipment(Buffer.from(accountInfo.data));
+          })
+          .catch(error => {
+            throw error
+            return null;
+          })
+      );
+    }
+
+    const equipmentResults = await Promise.all(equipmentPromises);
+    const validEquipment = equipmentResults.filter((equipment): equipment is DeserializedEquipment => equipment !== null);
+
+    return validEquipment;
+  } catch (error) {
+    throw error;
+  }
+}

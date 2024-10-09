@@ -7,7 +7,7 @@ export interface Vendor {
   owner: PublicKey; // PublicKey of the vendor owner
   name: string;     // Name of the vendor
   image?: string; // Optional URL of the vendor's image
-  metadata: VendorMetadata; // Metadata containing details about the vendor
+  metadata: Record<string, any>; // Metadata containing details about the vendor
 }
 
 /**
@@ -91,7 +91,11 @@ export interface DayHours {
 }
 
 export interface VendorData {
-  owner: PublicKey;           // Public key of the vendor's owner.
-  collectionAddress: PublicKey; // Public key of the vendor's collection.
-  equipmentCount: bigint;     // Number of equipment associated with the vendor.
+  authority: PublicKey;
+  collection: PublicKey;
+  name: string;
+  uri: string;
+  // marketplace: PublicKey | null;
+  equipmentCount: number;
+  uniqueId: PublicKey;
 }

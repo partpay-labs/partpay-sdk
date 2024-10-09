@@ -1,6 +1,4 @@
 export * from "./createSigner"
-export * from "./deserializeEquipment"
-export * from "./extractEquipmentPubkey"
-export * from "./fetchEquipmentDetails"
 export * from "./metadataUploader"
 export * from "./partpayPlugin"
+export * from "./getAssetMetadata"

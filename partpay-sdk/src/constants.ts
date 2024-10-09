@@ -10,4 +10,5 @@ import { publicKey } from "@metaplex-foundation/umi"; // Importing the 'publicKe
  *   - This constant is used when initializing transactions that need to interact with the Partpay program.
  *   - Ensure the public key is kept accurate and up-to-date to prevent interaction failures.
  */
-export const PARTPAY_PROGRAM_ID = publicKey("PARTozLbJJbUydMxJCPphjhkLcRP5s4jBpiuHkNDfio");
+export const PARTPAY_PROGRAM_ID = publicKey("PARTDzURUGgnjU7jfUgGvBQunWKEJDeSGwHUyYcu7Ax");
+// export const MARKETPLACE = publicKey("HbdGeC1vz4K8Fj9RQh43DtitxWBruYmW3gnxc9M4HxV5");
